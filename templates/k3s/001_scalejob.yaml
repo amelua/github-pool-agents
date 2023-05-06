@@ -1,0 +1,107 @@
+# Template using K3S like provider
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    kubernetes.io/metadata.name: github-runner
+  name: github-runner
+---
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: github-auth
+  namespace: github-runner
+data:
+  ACCESS_TOKEN: __ENV_ACCESS_TOKEN__
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: github-trigger-auth
+  namespace: github-runner
+spec:
+  secretTargetRef:
+    - parameter: personalAccessToken
+      name: github-auth
+      key: ACCESS_TOKEN
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: debian-11
+  namespace: github-runner
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+          - name: debian-11
+            image: __ENV_DOCKER_IMG_URL__:__ENV_DOCKER_TAG__
+            imagePullPolicy: __ENV_DOCKER_IMAGE_PULL_POLICY__
+            env:
+              - name: ACCESS_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: github-auth
+                    key: ACCESS_TOKEN
+              - name: DISABLE_AUTO_UPDATE
+                value: "__ENV_DISABLE_AUTO_UPDATE__"
+              - name: EPHEMERAL
+                value: "__ENV_EPHEMERAL__"
+              - name: LABELS
+                value: "__ENV_LABELS__"
+              - name: ORG_NAME
+                value: "__ENV_ORG_NAME__"
+              - name: REPO_URL
+                value: "__ENV_REPO_URL__"
+              - name: RUN_AS_ROOT
+                value: "__ENV_RUN_AS_ROOT__"
+              - name: RUNNER_GROUP
+                value: "__ENV_RUNNER_GROUP__"
+              - name: RUNNER_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: RUNNER_SCOPE
+                value: "__ENV_RUNNER_SCOPE__"
+            securityContext:
+              privileged: true
+              capabilities:
+                add:
+                  - NET_ADMIN
+            resources:
+              requests:
+                cpu: "200m"
+                memory: "1024Mi"
+              limits:
+                cpu: "2"
+                memory: "4096Mi"
+        dnsPolicy: "None"
+        dnsConfig:
+          nameservers:
+            - 10.43.0.10
+            - 9.9.9.9
+            - 8.8.8.8
+          searches:
+            - github-runner.svc.cluster.local
+            - svc.cluster.local
+            - cluster.local
+          options:
+            - name: ndots
+              value: "5"
+  pollingInterval: 30
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  scalingStrategy:
+    strategy: "default"
+  triggers:
+    - type: github-runner
+      metadata:
+        ownerFromEnv: "ORG_NAME"
+        labelsFromEnv: "LABELS"
+        runnerScopeFromEnv: "RUNNER_SCOPE"
+      authenticationRef:
+        name: github-trigger-auth

@@ -1,0 +1,55 @@
+name: 'github-runner'
+
+on: [push, pull_request]
+
+env:
+  REGISTRY_USER: rusian
+  IMAGE_REGISTRY: docker.io
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+jobs:
+  github-runner:
+    name: 'github-runner'
+    runs-on:
+      group: Default
+      labels: self-hosted
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check syntax docker
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./container/Dockerfile
+
+      - name: Build an image from Dockerfile
+        run: |
+          docker build --tag docker.io/rusian/github-runner:latest --tag docker.io/rusian/github-runner:debian-11-${{ github.sha }} .
+        working-directory: ./container
+
+      - name: Clear memory cache
+        run: |
+          sudo sh -c "free && sync && echo 3 > /proc/sys/vm/drop_caches && free"
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'rusian/github-runner:debian-11-${{ github.sha }}'
+          format: 'table'
+          ignore-unfixed: true
+          vuln-type: 'os'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Log in to docker.io
+        run: |
+          echo -n "${{ env.REGISTRY_PASSWORD }}" | docker login docker.io -u ${{ env.REGISTRY_USER }} --password-stdin
+
+      - name: Pushing image OCI
+        run: |
+          docker push docker.io/rusian/github-runner:debian-11-${{ github.sha }}
+          docker push docker.io/rusian/github-runner:latest
