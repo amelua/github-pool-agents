@@ -53,3 +53,7 @@ jobs:
         run: |
           docker push docker.io/rusian/github-runner:debian-11-${{ github.sha }}
           docker push docker.io/rusian/github-runner:latest
+
+      - name: Final Memory deallocation
+        run: |
+          sudo sh -c "free && sync && echo 3 > /proc/sys/vm/drop_caches && free"
