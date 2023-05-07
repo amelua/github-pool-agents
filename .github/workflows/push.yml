@@ -32,10 +32,6 @@ jobs:
           docker build --tag docker.io/rusian/github-runner:latest --tag docker.io/rusian/github-runner:debian-11-${{ github.sha }} .
         working-directory: ./container
 
-      - name: Clear memory cache
-        run: |
-          sudo sh -c "free && sync && echo 3 > /proc/sys/vm/drop_caches && free"
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -53,7 +49,3 @@ jobs:
         run: |
           docker push docker.io/rusian/github-runner:debian-11-${{ github.sha }}
           docker push docker.io/rusian/github-runner:latest
-
-      - name: Final Memory deallocation
-        run: |
-          sudo sh -c "free && sync && echo 3 > /proc/sys/vm/drop_caches && free"
