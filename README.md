@@ -24,6 +24,10 @@ bash scripts/set-aws-vars.sh
 ```
 
 ```console
+kubectl apply -f prod/000_keda.yaml
+```
+
+```console
 kubectl apply -f prod/aws
 ```
 
@@ -35,6 +39,10 @@ cp -v .env.sample .env
 
 ```console
 bash scripts/set-k3s-vars.sh
+```
+
+```console
+kubectl apply -f prod/000_keda.yaml
 ```
 
 ```console
