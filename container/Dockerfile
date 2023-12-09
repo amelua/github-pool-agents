@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0 as build
 
 ARG RUNNER_ARCH="x64"
-ARG RUNNER_CONTAINER_HOOKS_VERSION="0.3.1"
-ARG RUNNER_VERSION="2.304.0"
+ARG RUNNER_CONTAINER_HOOKS_VERSION="0.5.0"
+ARG RUNNER_VERSION="2.311.0"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -20,7 +20,7 @@ RUN curl -f -L -o runner-container-hooks.zip "https://github.com/actions/runner-
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0
 
-ARG GIT_LFS_VERSION="3.2.0"
+ARG GIT_LFS_VERSION="3.4.0"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV RUNNER_MANUALLY_TRAP_SIG=1
@@ -40,7 +40,7 @@ jq \
 unzip \
 && DPKG_ARCH="$(dpkg --print-architecture)" \
 && LSB_RELEASE_CODENAME="$(lsb_release -cs)" \
-&& curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+&& curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
 && echo "deb [arch=${DPKG_ARCH} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian ${LSB_RELEASE_CODENAME} stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
 && ( curl -L "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip -q awscliv2.zip -d /tmp/ && /tmp/aws/install && rm -v awscliv2.zip && rm -rf /tmp/aws ) \
 && ( curl --retry 5 -f -L "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-${DPKG_ARCH}-v${GIT_LFS_VERSION}.tar.gz" -o /tmp/lfs.tar.gz && tar -xzf /tmp/lfs.tar.gz -C /tmp && /tmp/git-lfs-"${GIT_LFS_VERSION}"/install.sh && rm -rf /tmp/lfs.tar.gz /tmp/git-lfs-"${GIT_LFS_VERSION}" ) \
