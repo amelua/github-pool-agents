@@ -37,7 +37,7 @@ jobs:
         with:
           image-ref: 'rusian/github-runner:debian-12-${{ github.sha }}'
           format: 'table'
-          ignore-unfixed: true
+          ignore-unfixed: false
           vuln-type: 'os'
           severity: 'CRITICAL,HIGH'
 
