@@ -58,6 +58,7 @@ docker-buildx-plugin \
 containerd.io \
 procps \
 sudo \
+make \
 && apt-get clean -y \
 && apt-get autoclean -y \
 && apt-get autoremove -y \
