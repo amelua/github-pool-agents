@@ -7,7 +7,7 @@ ARG RUNNER_VERSION="2.311.0"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # hadolint ignore=DL3008
-RUN apt-get update -y && apt-get install -y curl unzip --no-install-recommends
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y curl unzip --no-install-recommends
 
 WORKDIR /actions-runner
 RUN curl -C - --retry 5 -f -L -o runner.tar.gz "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${RUNNER_ARCH}-${RUNNER_VERSION}.tar.gz" \
