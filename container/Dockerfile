@@ -59,6 +59,7 @@ containerd.io \
 procps \
 sudo \
 make \
+libcap2-bin \
 && apt-get clean -y \
 && apt-get autoclean -y \
 && apt-get autoremove -y \
