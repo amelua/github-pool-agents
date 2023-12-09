@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/runtime-deps:6.0 as build
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0 as build
 
 ARG RUNNER_ARCH="x64"
 ARG RUNNER_CONTAINER_HOOKS_VERSION="0.5.0"
@@ -18,7 +18,7 @@ RUN curl -f -L -o runner-container-hooks.zip "https://github.com/actions/runner-
 && unzip ./runner-container-hooks.zip -d ./k8s \
 && rm runner-container-hooks.zip
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:6.0
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 
 ARG GIT_LFS_VERSION="3.4.0"
 
@@ -46,11 +46,11 @@ unzip \
 && ( curl --retry 5 -f -L "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-${DPKG_ARCH}-v${GIT_LFS_VERSION}.tar.gz" -o /tmp/lfs.tar.gz && tar -xzf /tmp/lfs.tar.gz -C /tmp && /tmp/git-lfs-"${GIT_LFS_VERSION}"/install.sh && rm -rf /tmp/lfs.tar.gz /tmp/git-lfs-"${GIT_LFS_VERSION}" ) \
 && GH_CLI_VERSION=$(curl -sL -H "Accept: application/vnd.github+json" https://api.github.com/repos/cli/cli/releases/latest | jq -r '.tag_name' | sed -e 's|^v||g' ) \
 && GH_CLI_DOWNLOAD_URL=$(curl -sL -H "Accept: application/vnd.github+json" https://api.github.com/repos/cli/cli/releases/latest | jq ".assets[] | select(.name == \"gh_${GH_CLI_VERSION}_linux_${DPKG_ARCH}.deb\")" | jq -r '.browser_download_url' ) \
-&& curl -sSLo /tmp/ghcli.deb "${GH_CLI_DOWNLOAD_URL}" && apt-get -y install /tmp/ghcli.deb --no-install-recommends && rm /tmp/ghcli.deb
+&& curl -sSLo /tmp/ghcli.deb "${GH_CLI_DOWNLOAD_URL}" && apt-get -y install /tmp/ghcli.deb --no-install-recommends && rm /tmp/ghcli.deb \
+&& apt-get update -y
 
 # hadolint ignore=DL3008
-RUN apt-get update -y \
-&& apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
 dumb-init \
 docker-ce \
 docker-ce-cli \

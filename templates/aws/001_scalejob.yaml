@@ -62,14 +62,14 @@ metadata:
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
-  name: debian-11
+  name: debian-12
   namespace: github-runner
 spec:
   jobTargetRef:
     template:
       spec:
         containers:
-          - name: debian-11
+          - name: debian-12
             image: __ENV_DOCKER_IMG_URL__:__ENV_DOCKER_TAG__
             imagePullPolicy: __ENV_DOCKER_IMAGE_PULL_POLICY__
             env:

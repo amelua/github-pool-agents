@@ -56,7 +56,7 @@ docker run -d --restart always --name github-runner \
   -e ORG_NAME="octokode" \
   -e LABELS="my-label,other-label" \
   -v /tmp/github-runner-your-repo:/tmp/github-runner-your-repo \
-  docker.io/<DOCKER-OWNER>/github-runner:debian-11
+  docker.io/<DOCKER-OWNER>/github-runner:debian-12
 ```
 
 ### Per-Repo Runner
@@ -69,7 +69,7 @@ docker run -d --restart always --name github-runner \
   -e RUNNER_WORKDIR="/tmp/github-runner-your-repo" \
   -e RUNNER_GROUP="my-group" \
   -v /tmp/github-runner-your-repo:/tmp/github-runner-your-repo \
-  docker.io/rusian/github-runner:debian-11
+  docker.io/rusian/github-runner:debian-12
 ```
 
 ## Logs
@@ -87,7 +87,7 @@ kubectl -n keda logs pod/keda-operator-<HASH>
 Sample:
 
 ```console
-docker build --no-cache --tag rusian/github-runner:debian-11 -f container/Dockerfile container/
+docker build --no-cache --tag rusian/github-runner:debian-12 -f container/Dockerfile container/
 ```
 
 ### Build Image via podman
@@ -95,7 +95,7 @@ docker build --no-cache --tag rusian/github-runner:debian-11 -f container/Docker
 Sample:
 
 ```console
-podman build --net=host --format docker --no-cache --tag rusian/github-runner:debian-11 -f container/Dockerfile container/
+podman build --net=host --format docker --no-cache --tag rusian/github-runner:debian-12 -f container/Dockerfile container/
 ```
 
 ## KEDA's relationship with HPA
