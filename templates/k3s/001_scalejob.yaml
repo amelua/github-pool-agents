@@ -71,9 +71,6 @@ spec:
                 add:
                   - NET_ADMIN
             resources:
-              requests:
-                cpu: "200m"
-                memory: "1024Mi"
               limits:
                 cpu: "2"
                 memory: "4096Mi"
@@ -90,7 +87,7 @@ spec:
           options:
             - name: ndots
               value: "5"
-  pollingInterval: 30
+  pollingInterval: 15
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   minReplicaCount: 1
