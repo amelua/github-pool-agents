@@ -4,17 +4,18 @@ metadata:
   labels:
     app.kubernetes.io/name: keda
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
   labels:
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: clustertriggerauthentications.keda.sh
 spec:
   group: keda.sh
@@ -40,14 +41,6 @@ spec:
       type: string
     - jsonPath: .spec.hashiCorpVault.address
       name: VaultAddress
-      type: string
-    - jsonPath: .status.scaledobjects
-      name: ScaledObjects
-      priority: 1
-      type: string
-    - jsonPath: .status.scaledjobs
-      name: ScaledJobs
-      priority: 1
       type: string
     name: v1alpha1
     schema:
@@ -241,31 +234,22 @@ spec:
                   type: object
                 type: array
             type: object
-          status:
-            description: TriggerAuthenticationStatus defines the observed state of
-              TriggerAuthentication
-            properties:
-              scaledjobs:
-                type: string
-              scaledobjects:
-                type: string
-            type: object
         required:
         - spec
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
+    subresources: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
   labels:
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: scaledjobs.keda.sh
 spec:
   group: keda.sh
@@ -296,9 +280,6 @@ spec:
       type: string
     - jsonPath: .status.conditions[?(@.type=="Active")].status
       name: Active
-      type: string
-    - jsonPath: .status.conditions[?(@.type=="Paused")].status
-      name: Paused
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -345,18 +326,8 @@ spec:
                       job failed. Defaults to 6
                     format: int32
                     type: integer
-                  backoffLimitPerIndex:
-                    description: Specifies the limit for the number of retries within
-                      an index before marking this index as failed. When enabled the
-                      number of failures per index is kept in the pod's batch.kubernetes.io/job-index-failure-count
-                      annotation. It can only be set when Job's completionMode=Indexed,
-                      and the Pod's restart policy is Never. The field is immutable.
-                      This field is alpha-level. It can be used when the `JobBackoffLimitPerIndex`
-                      feature gate is enabled (disabled by default).
-                    format: int32
-                    type: integer
                   completionMode:
-                    description: "completionMode specifies how Pod completions are
+                    description: "CompletionMode specifies how Pod completions are
                       tracked. It can be `NonIndexed` (default) or `Indexed`. \n `NonIndexed`
                       means that the Job is considered complete when there have been
                       .spec.completions successfully completed Pods. Each Pod completion
@@ -375,7 +346,7 @@ spec:
                     type: string
                   completions:
                     description: 'Specifies the desired number of successfully finished
-                      pods the job should be run with.  Setting to null means that
+                      pods the job should be run with.  Setting to nil means that
                       the success of any pod signals the success of all pods, and
                       allows parallelism to have any positive value.  Setting to 1
                       means that parallelism is limited to 1 and the success of that
@@ -394,20 +365,6 @@ spec:
                       that were created with the old `extensions/v1beta1` API. More
                       info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#specifying-your-own-pod-selector'
                     type: boolean
-                  maxFailedIndexes:
-                    description: Specifies the maximal number of failed indexes before
-                      marking the Job as failed, when backoffLimitPerIndex is set.
-                      Once the number of failed indexes exceeds this number the entire
-                      Job is marked as Failed and its execution is terminated. When
-                      left as null the job continues execution of all of its indexes
-                      and is marked with the `Complete` Job condition. It can only
-                      be specified when backoffLimitPerIndex is set. It can be null
-                      or up to completions. It is required and must be less than or
-                      equal to 10^4 when is completions greater than 10^5. This field
-                      is alpha-level. It can be used when the `JobBackoffLimitPerIndex`
-                      feature gate is enabled (disabled by default).
-                    format: int32
-                    type: integer
                   parallelism:
                     description: 'Specifies the maximum desired number of pods the
                       job should run at any given time. The actual number of pods
@@ -424,8 +381,8 @@ spec:
                       pods, represented by the jobs's .status.failed field, is incremented
                       and it is checked against the backoffLimit. This field cannot
                       be used in combination with restartPolicy=OnFailure. \n This
-                      field is beta-level. It can be used when the `JobPodFailurePolicy`
-                      feature gate is enabled (enabled by default)."
+                      field is alpha-level. To use this field, you must enable the
+                      `JobPodFailurePolicy` feature gate (disabled by default)."
                     properties:
                       rules:
                         description: A list of pod failure policy rules. The rules
@@ -436,26 +393,22 @@ spec:
                           the backoffLimit. At most 20 elements are allowed.
                         items:
                           description: PodFailurePolicyRule describes how a pod failure
-                            is handled when the requirements are met. One of onExitCodes
+                            is handled when the requirements are met. One of OnExitCodes
                             and onPodConditions, but not both, can be used in each
                             rule.
                           properties:
                             action:
-                              description: "Specifies the action taken on a pod failure
+                              description: 'Specifies the action taken on a pod failure
                                 when the requirements are satisfied. Possible values
-                                are: \n - FailJob: indicates that the pod's job is
-                                marked as Failed and all running pods are terminated.
-                                - FailIndex: indicates that the pod's index is marked
-                                as Failed and will not be restarted. This value is
-                                alpha-level. It can be used when the `JobBackoffLimitPerIndex`
-                                feature gate is enabled (disabled by default). - Ignore:
+                                are: - FailJob: indicates that the pod''s job is marked
+                                as Failed and all running pods are terminated. - Ignore:
                                 indicates that the counter towards the .backoffLimit
                                 is not incremented and a replacement pod is created.
                                 - Count: indicates that the pod is handled in the
                                 default way - the counter towards the .backoffLimit
                                 is incremented. Additional values are considered to
                                 be added in the future. Clients should react to an
-                                unknown action by skipping the rule."
+                                unknown action by skipping the rule.'
                               type: string
                             onExitCodes:
                               description: Represents the requirement on the container
@@ -469,22 +422,22 @@ spec:
                                     initContainer names in the pod template.
                                   type: string
                                 operator:
-                                  description: "Represents the relationship between
+                                  description: 'Represents the relationship between
                                     the container exit code(s) and the specified values.
                                     Containers completed with success (exit code 0)
                                     are excluded from the requirement check. Possible
-                                    values are: \n - In: the requirement is satisfied
+                                    values are: - In: the requirement is satisfied
                                     if at least one container exit code (might be
                                     multiple if there are multiple containers not
-                                    restricted by the 'containerName' field) is in
-                                    the set of specified values. - NotIn: the requirement
+                                    restricted by the ''containerName'' field) is
+                                    in the set of specified values. - NotIn: the requirement
                                     is satisfied if at least one container exit code
                                     (might be multiple if there are multiple containers
-                                    not restricted by the 'containerName' field) is
-                                    not in the set of specified values. Additional
+                                    not restricted by the ''containerName'' field)
+                                    is not in the set of specified values. Additional
                                     values are considered to be added in the future.
                                     Clients should react to an unknown operator by
-                                    assuming the requirement is not satisfied."
+                                    assuming the requirement is not satisfied.'
                                   type: string
                                 values:
                                   description: Specifies the set of values. Each returned
@@ -535,24 +488,13 @@ spec:
                               x-kubernetes-list-type: atomic
                           required:
                           - action
+                          - onPodConditions
                           type: object
                         type: array
                         x-kubernetes-list-type: atomic
                     required:
                     - rules
                     type: object
-                  podReplacementPolicy:
-                    description: "podReplacementPolicy specifies when to create replacement
-                      Pods. Possible values are: - TerminatingOrFailed means that
-                      we recreate pods when they are terminating (has a metadata.deletionTimestamp)
-                      or failed. - Failed means to wait until a previously created
-                      Pod is fully terminated (has phase Failed or Succeeded) before
-                      creating a replacement Pod. \n When using podFailurePolicy,
-                      Failed is the the only allowed value. TerminatingOrFailed and
-                      Failed are allowed values when podFailurePolicy is not in use.
-                      This is an alpha field. Enable JobPodReplacementPolicy to be
-                      able to use this field."
-                    type: string
                   selector:
                     description: 'A label query over pods that should match the pod
                       count. Normally, the system sets this field for you. More info:
@@ -601,7 +543,7 @@ spec:
                     type: object
                     x-kubernetes-map-type: atomic
                   suspend:
-                    description: suspend specifies whether the Job controller should
+                    description: Suspend specifies whether the Job controller should
                       create Pods or not. If a Job is created with suspend set to
                       true, no Pods are created by the Job controller. If a Job is
                       suspended after creation (i.e. the flag goes from false to true),
@@ -613,8 +555,7 @@ spec:
                     type: boolean
                   template:
                     description: 'Describes the pod that will be created when executing
-                      a job. The only allowed template.spec.restartPolicy values are
-                      "Never" or "OnFailure". More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/'
+                      a job. More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/'
                     properties:
                       metadata:
                         description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
@@ -1879,10 +1820,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -1995,10 +1933,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -2087,7 +2022,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -2121,10 +2057,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -2310,7 +2243,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -2344,10 +2278,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -2443,28 +2374,6 @@ spec:
                                       format: int32
                                       type: integer
                                   type: object
-                                resizePolicy:
-                                  description: Resources resize policy for the container.
-                                  items:
-                                    description: ContainerResizePolicy represents
-                                      resource resize policy for the container.
-                                    properties:
-                                      resourceName:
-                                        description: 'Name of the resource to which
-                                          this resource resize policy applies. Supported
-                                          values: cpu, memory.'
-                                        type: string
-                                      restartPolicy:
-                                        description: Restart policy to apply when
-                                          specified resource is resized. If not specified,
-                                          it defaults to NotRequired.
-                                        type: string
-                                    required:
-                                    - resourceName
-                                    - restartPolicy
-                                    type: object
-                                  type: array
-                                  x-kubernetes-list-type: atomic
                                 resources:
                                   description: 'Compute Resources required by this
                                     container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
@@ -2474,8 +2383,7 @@ spec:
                                         defined in spec.resourceClaims, that are used
                                         by this container. \n This is an alpha field
                                         and requires enabling the DynamicResourceAllocation
-                                        feature gate. \n This field is immutable.
-                                        It can only be set for containers."
+                                        feature gate. \n This field is immutable."
                                       items:
                                         description: ResourceClaim references one
                                           entry in PodSpec.ResourceClaims.
@@ -2515,34 +2423,10 @@ spec:
                                         amount of compute resources required. If Requests
                                         is omitted for a container, it defaults to
                                         Limits if that is explicitly specified, otherwise
-                                        to an implementation-defined value. Requests
-                                        cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                        to an implementation-defined value. More info:
+                                        https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                                       type: object
                                   type: object
-                                restartPolicy:
-                                  description: 'RestartPolicy defines the restart
-                                    behavior of individual containers in a pod. This
-                                    field may only be set for init containers, and
-                                    the only allowed value is "Always". For non-init
-                                    containers or when this field is not specified,
-                                    the restart behavior is defined by the Pod''s
-                                    restart policy and the container type. Setting
-                                    the RestartPolicy as "Always" for the init container
-                                    will have the following effect: this init container
-                                    will be continually restarted on exit until all
-                                    regular containers have terminated. Once all regular
-                                    containers have completed, all init containers
-                                    with restartPolicy "Always" will be shut down.
-                                    This lifecycle differs from normal init containers
-                                    and is often referred to as a "sidecar" container.
-                                    Although this init container still starts in the
-                                    init container sequence, it does not wait for
-                                    the container to complete before proceeding to
-                                    the next init container. Instead, the next init
-                                    container starts immediately after this init container
-                                    is started, or after any startupProbe has successfully
-                                    completed.'
-                                  type: string
                                 securityContext:
                                   description: 'SecurityContext defines the security
                                     options the container should be run with. If set,
@@ -2678,9 +2562,8 @@ spec:
                                             should be used. The profile must be preconfigured
                                             on the node to work. Must be a descending
                                             path, relative to the kubelet's configured
-                                            seccomp profile location. Must be set
-                                            if type is "Localhost". Must NOT be set
-                                            for any other type.
+                                            seccomp profile location. Must only be
+                                            set if type is "Localhost".
                                           type: string
                                         type:
                                           description: "type indicates which kind
@@ -2717,12 +2600,18 @@ spec:
                                         hostProcess:
                                           description: HostProcess determines if a
                                             container should be run as a 'Host Process'
-                                            container. All of a Pod's containers must
-                                            have the same effective HostProcess value
-                                            (it is not allowed to have a mix of HostProcess
-                                            containers and non-HostProcess containers).
-                                            In addition, if HostProcess is true then
-                                            HostNetwork must also be set to true.
+                                            container. This field is alpha-level and
+                                            will only be honored by components that
+                                            enable the WindowsHostProcessContainers
+                                            feature flag. Setting this field without
+                                            the feature flag will result in errors
+                                            when validating the Pod. All of a Pod's
+                                            containers must have the same effective
+                                            HostProcess value (it is not allowed to
+                                            have a mix of HostProcess containers and
+                                            non-HostProcess containers).  In addition,
+                                            if HostProcess is true then HostNetwork
+                                            must also be set to true.
                                           type: boolean
                                         runAsUserName:
                                           description: The UserName in Windows to
@@ -2775,7 +2664,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -2809,10 +2699,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -3375,10 +3262,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -3491,10 +3375,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -3582,7 +3463,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -3616,10 +3498,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -3798,7 +3677,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -3832,10 +3712,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -3931,28 +3808,6 @@ spec:
                                       format: int32
                                       type: integer
                                   type: object
-                                resizePolicy:
-                                  description: Resources resize policy for the container.
-                                  items:
-                                    description: ContainerResizePolicy represents
-                                      resource resize policy for the container.
-                                    properties:
-                                      resourceName:
-                                        description: 'Name of the resource to which
-                                          this resource resize policy applies. Supported
-                                          values: cpu, memory.'
-                                        type: string
-                                      restartPolicy:
-                                        description: Restart policy to apply when
-                                          specified resource is resized. If not specified,
-                                          it defaults to NotRequired.
-                                        type: string
-                                    required:
-                                    - resourceName
-                                    - restartPolicy
-                                    type: object
-                                  type: array
-                                  x-kubernetes-list-type: atomic
                                 resources:
                                   description: Resources are not allowed for ephemeral
                                     containers. Ephemeral containers use spare resources
@@ -3963,8 +3818,7 @@ spec:
                                         defined in spec.resourceClaims, that are used
                                         by this container. \n This is an alpha field
                                         and requires enabling the DynamicResourceAllocation
-                                        feature gate. \n This field is immutable.
-                                        It can only be set for containers."
+                                        feature gate. \n This field is immutable."
                                       items:
                                         description: ResourceClaim references one
                                           entry in PodSpec.ResourceClaims.
@@ -4004,16 +3858,10 @@ spec:
                                         amount of compute resources required. If Requests
                                         is omitted for a container, it defaults to
                                         Limits if that is explicitly specified, otherwise
-                                        to an implementation-defined value. Requests
-                                        cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                        to an implementation-defined value. More info:
+                                        https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                                       type: object
                                   type: object
-                                restartPolicy:
-                                  description: Restart policy for the container to
-                                    manage the restart behavior of each container
-                                    within a pod. This may only be set for init containers.
-                                    You cannot set this field on ephemeral containers.
-                                  type: string
                                 securityContext:
                                   description: 'Optional: SecurityContext defines
                                     the security options the ephemeral container should
@@ -4149,9 +3997,8 @@ spec:
                                             should be used. The profile must be preconfigured
                                             on the node to work. Must be a descending
                                             path, relative to the kubelet's configured
-                                            seccomp profile location. Must be set
-                                            if type is "Localhost". Must NOT be set
-                                            for any other type.
+                                            seccomp profile location. Must only be
+                                            set if type is "Localhost".
                                           type: string
                                         type:
                                           description: "type indicates which kind
@@ -4188,12 +4035,18 @@ spec:
                                         hostProcess:
                                           description: HostProcess determines if a
                                             container should be run as a 'Host Process'
-                                            container. All of a Pod's containers must
-                                            have the same effective HostProcess value
-                                            (it is not allowed to have a mix of HostProcess
-                                            containers and non-HostProcess containers).
-                                            In addition, if HostProcess is true then
-                                            HostNetwork must also be set to true.
+                                            container. This field is alpha-level and
+                                            will only be honored by components that
+                                            enable the WindowsHostProcessContainers
+                                            feature flag. Setting this field without
+                                            the feature flag will result in errors
+                                            when validating the Pod. All of a Pod's
+                                            containers must have the same effective
+                                            HostProcess value (it is not allowed to
+                                            have a mix of HostProcess containers and
+                                            non-HostProcess containers).  In addition,
+                                            if HostProcess is true then HostNetwork
+                                            must also be set to true.
                                           type: boolean
                                         runAsUserName:
                                           description: The UserName in Windows to
@@ -4238,7 +4091,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -4272,10 +4126,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -4874,10 +4725,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -4990,10 +4838,7 @@ spec:
                                                 properties:
                                                   name:
                                                     description: The header field
-                                                      name. This will be canonicalized
-                                                      upon output, so case-variant
-                                                      names will be understood as
-                                                      the same header.
+                                                      name
                                                     type: string
                                                   value:
                                                     description: The header field
@@ -5082,7 +4927,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -5116,10 +4962,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -5305,7 +5148,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -5339,10 +5183,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -5438,28 +5279,6 @@ spec:
                                       format: int32
                                       type: integer
                                   type: object
-                                resizePolicy:
-                                  description: Resources resize policy for the container.
-                                  items:
-                                    description: ContainerResizePolicy represents
-                                      resource resize policy for the container.
-                                    properties:
-                                      resourceName:
-                                        description: 'Name of the resource to which
-                                          this resource resize policy applies. Supported
-                                          values: cpu, memory.'
-                                        type: string
-                                      restartPolicy:
-                                        description: Restart policy to apply when
-                                          specified resource is resized. If not specified,
-                                          it defaults to NotRequired.
-                                        type: string
-                                    required:
-                                    - resourceName
-                                    - restartPolicy
-                                    type: object
-                                  type: array
-                                  x-kubernetes-list-type: atomic
                                 resources:
                                   description: 'Compute Resources required by this
                                     container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
@@ -5469,8 +5288,7 @@ spec:
                                         defined in spec.resourceClaims, that are used
                                         by this container. \n This is an alpha field
                                         and requires enabling the DynamicResourceAllocation
-                                        feature gate. \n This field is immutable.
-                                        It can only be set for containers."
+                                        feature gate. \n This field is immutable."
                                       items:
                                         description: ResourceClaim references one
                                           entry in PodSpec.ResourceClaims.
@@ -5510,34 +5328,10 @@ spec:
                                         amount of compute resources required. If Requests
                                         is omitted for a container, it defaults to
                                         Limits if that is explicitly specified, otherwise
-                                        to an implementation-defined value. Requests
-                                        cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                                        to an implementation-defined value. More info:
+                                        https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                                       type: object
                                   type: object
-                                restartPolicy:
-                                  description: 'RestartPolicy defines the restart
-                                    behavior of individual containers in a pod. This
-                                    field may only be set for init containers, and
-                                    the only allowed value is "Always". For non-init
-                                    containers or when this field is not specified,
-                                    the restart behavior is defined by the Pod''s
-                                    restart policy and the container type. Setting
-                                    the RestartPolicy as "Always" for the init container
-                                    will have the following effect: this init container
-                                    will be continually restarted on exit until all
-                                    regular containers have terminated. Once all regular
-                                    containers have completed, all init containers
-                                    with restartPolicy "Always" will be shut down.
-                                    This lifecycle differs from normal init containers
-                                    and is often referred to as a "sidecar" container.
-                                    Although this init container still starts in the
-                                    init container sequence, it does not wait for
-                                    the container to complete before proceeding to
-                                    the next init container. Instead, the next init
-                                    container starts immediately after this init container
-                                    is started, or after any startupProbe has successfully
-                                    completed.'
-                                  type: string
                                 securityContext:
                                   description: 'SecurityContext defines the security
                                     options the container should be run with. If set,
@@ -5673,9 +5467,8 @@ spec:
                                             should be used. The profile must be preconfigured
                                             on the node to work. Must be a descending
                                             path, relative to the kubelet's configured
-                                            seccomp profile location. Must be set
-                                            if type is "Localhost". Must NOT be set
-                                            for any other type.
+                                            seccomp profile location. Must only be
+                                            set if type is "Localhost".
                                           type: string
                                         type:
                                           description: "type indicates which kind
@@ -5712,12 +5505,18 @@ spec:
                                         hostProcess:
                                           description: HostProcess determines if a
                                             container should be run as a 'Host Process'
-                                            container. All of a Pod's containers must
-                                            have the same effective HostProcess value
-                                            (it is not allowed to have a mix of HostProcess
-                                            containers and non-HostProcess containers).
-                                            In addition, if HostProcess is true then
-                                            HostNetwork must also be set to true.
+                                            container. This field is alpha-level and
+                                            will only be honored by components that
+                                            enable the WindowsHostProcessContainers
+                                            feature flag. Setting this field without
+                                            the feature flag will result in errors
+                                            when validating the Pod. All of a Pod's
+                                            containers must have the same effective
+                                            HostProcess value (it is not allowed to
+                                            have a mix of HostProcess containers and
+                                            non-HostProcess containers).  In addition,
+                                            if HostProcess is true then HostNetwork
+                                            must also be set to true.
                                           type: boolean
                                         runAsUserName:
                                           description: The UserName in Windows to
@@ -5770,7 +5569,8 @@ spec:
                                       type: integer
                                     grpc:
                                       description: GRPC specifies an action involving
-                                        a GRPC port.
+                                        a GRPC port. This is a beta field and requires
+                                        enabling GRPCContainerProbe feature gate.
                                       properties:
                                         port:
                                           description: Port number of the gRPC service.
@@ -5804,10 +5604,7 @@ spec:
                                               header to be used in HTTP probes
                                             properties:
                                               name:
-                                                description: The header field name.
-                                                  This will be canonicalized upon
-                                                  output, so case-variant names will
-                                                  be understood as the same header.
+                                                description: The header field name
                                                 type: string
                                               value:
                                                 description: The header field value
@@ -6169,13 +5966,20 @@ spec:
                                         will be used to create a new ResourceClaim,
                                         which will be bound to this pod. When this
                                         pod is deleted, the ResourceClaim will also
-                                        be deleted. The pod name and resource name,
-                                        along with a generated component, will be
-                                        used to form a unique name for the ResourceClaim,
-                                        which will be recorded in pod.status.resourceClaimStatuses.
-                                        \n This field is immutable and no changes
-                                        will be made to the corresponding ResourceClaim
-                                        by the control plane after creating the ResourceClaim."
+                                        be deleted. The name of the ResourceClaim
+                                        will be <pod name>-<resource name>, where
+                                        <resource name> is the PodResourceClaim.Name.
+                                        Pod validation will reject the pod if the
+                                        concatenated name is not valid for a ResourceClaim
+                                        (e.g. too long). \n An existing ResourceClaim
+                                        with that name that is not owned by the pod
+                                        will not be used for the pod to avoid using
+                                        an unrelated resource by mistake. Scheduling
+                                        and pod startup are then blocked until the
+                                        unrelated ResourceClaim is removed. \n This
+                                        field is immutable and no changes will be
+                                        made to the corresponding ResourceClaim by
+                                        the control plane after creating the ResourceClaim."
                                       type: string
                                   type: object
                               required:
@@ -6187,9 +5991,8 @@ spec:
                             x-kubernetes-list-type: map
                           restartPolicy:
                             description: 'Restart policy for all containers within
-                              the pod. One of Always, OnFailure, Never. In some contexts,
-                              only a subset of those values may be permitted. Default
-                              to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy'
+                              the pod. One of Always, OnFailure, Never. Default to
+                              Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy'
                             type: string
                           runtimeClassName:
                             description: 'RuntimeClassName refers to a RuntimeClass
@@ -6207,12 +6010,9 @@ spec:
                             type: string
                           schedulingGates:
                             description: "SchedulingGates is an opaque list of values
-                              that if specified will block scheduling the pod. If
-                              schedulingGates is not empty, the pod will stay in the
-                              SchedulingGated state and the scheduler will not attempt
-                              to schedule the pod. \n SchedulingGates can only be
-                              set at pod creation time, and be removed only afterwards.
-                              \n This is a beta feature enabled by the PodSchedulingReadiness
+                              that if specified will block scheduling the pod. More
+                              info:  https://git.k8s.io/enhancements/keps/sig-scheduling/3521-pod-scheduling-readiness.
+                              \n This is an alpha-level feature enabled by PodSchedulingReadiness
                               feature gate."
                             items:
                               description: PodSchedulingGate is associated to a Pod
@@ -6328,8 +6128,7 @@ spec:
                                       The profile must be preconfigured on the node
                                       to work. Must be a descending path, relative
                                       to the kubelet's configured seccomp profile
-                                      location. Must be set if type is "Localhost".
-                                      Must NOT be set for any other type.
+                                      location. Must only be set if type is "Localhost".
                                     type: string
                                   type:
                                     description: "type indicates which kind of seccomp
@@ -6401,12 +6200,16 @@ spec:
                                   hostProcess:
                                     description: HostProcess determines if a container
                                       should be run as a 'Host Process' container.
-                                      All of a Pod's containers must have the same
-                                      effective HostProcess value (it is not allowed
-                                      to have a mix of HostProcess containers and
-                                      non-HostProcess containers). In addition, if
-                                      HostProcess is true then HostNetwork must also
-                                      be set to true.
+                                      This field is alpha-level and will only be honored
+                                      by components that enable the WindowsHostProcessContainers
+                                      feature flag. Setting this field without the
+                                      feature flag will result in errors when validating
+                                      the Pod. All of a Pod's containers must have
+                                      the same effective HostProcess value (it is
+                                      not allowed to have a mix of HostProcess containers
+                                      and non-HostProcess containers).  In addition,
+                                      if HostProcess is true then HostNetwork must
+                                      also be set to true.
                                     type: boolean
                                   runAsUserName:
                                     description: The UserName in Windows to run the
@@ -6576,21 +6379,16 @@ spec:
                                   type: object
                                   x-kubernetes-map-type: atomic
                                 matchLabelKeys:
-                                  description: "MatchLabelKeys is a set of pod label
+                                  description: MatchLabelKeys is a set of pod label
                                     keys to select the pods over which spreading will
                                     be calculated. The keys are used to lookup values
                                     from the incoming pod labels, those key-value
                                     labels are ANDed with labelSelector to select
                                     the group of existing pods over which spreading
-                                    will be calculated for the incoming pod. The same
-                                    key is forbidden to exist in both MatchLabelKeys
-                                    and LabelSelector. MatchLabelKeys cannot be set
-                                    when LabelSelector isn't set. Keys that don't
-                                    exist in the incoming pod labels will be ignored.
-                                    A null or empty list means only match against
-                                    labelSelector. \n This is a beta field and requires
-                                    the MatchLabelKeysInPodTopologySpread feature
-                                    gate to be enabled (enabled by default)."
+                                    will be calculated for the incoming pod. Keys
+                                    that don't exist in the incoming pod labels will
+                                    be ignored. A null or empty list means only match
+                                    against labelSelector.
                                   items:
                                     type: string
                                   type: array
@@ -7161,7 +6959,7 @@ spec:
                                         between the SizeLimit specified here and the
                                         sum of memory limits of all containers in
                                         a pod. The default is nil which means that
-                                        the limit is undefined. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir'
+                                        the limit is undefined. More info: http://kubernetes.io/docs/user-guide/volumes#emptydir'
                                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                       x-kubernetes-int-or-string: true
                                   type: object
@@ -7371,8 +7169,7 @@ spec:
                                                     \n This is an alpha field and
                                                     requires enabling the DynamicResourceAllocation
                                                     feature gate. \n This field is
-                                                    immutable. It can only be set
-                                                    for containers."
+                                                    immutable."
                                                   items:
                                                     description: ResourceClaim references
                                                       one entry in PodSpec.ResourceClaims.
@@ -7417,7 +7214,6 @@ spec:
                                                     defaults to Limits if that is
                                                     explicitly specified, otherwise
                                                     to an implementation-defined value.
-                                                    Requests cannot exceed Limits.
                                                     More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                                                   type: object
                                               type: object
@@ -8561,7 +8357,7 @@ spec:
                   description: ScaleTriggers reference the scaler that will be used
                   properties:
                     authenticationRef:
-                      description: AuthenticationRef points to the TriggerAuthentication
+                      description: ScaledObjectAuthRef points to the TriggerAuthentication
                         or ClusterTriggerAuthentication object that is used to authenticate
                         the scaler with the environment
                       properties:
@@ -8596,8 +8392,6 @@ spec:
           status:
             description: ScaledJobStatus defines the observed state of ScaledJob
             properties:
-              Paused:
-                type: string
               conditions:
                 description: Conditions an array representation to store multiple
                   Conditions
@@ -8636,10 +8430,11 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
   labels:
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: scaledobjects.keda.sh
 spec:
   group: keda.sh
@@ -8679,9 +8474,6 @@ spec:
       type: string
     - jsonPath: .status.conditions[?(@.type=="Fallback")].status
       name: Fallback
-      type: string
-    - jsonPath: .status.conditions[?(@.type=="Paused")].status
-      name: Paused
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -8735,18 +8527,18 @@ spec:
                                     which must hold true for a specified past interval.
                                   properties:
                                     periodSeconds:
-                                      description: periodSeconds specifies the window
+                                      description: PeriodSeconds specifies the window
                                         of time for which the policy should hold true.
                                         PeriodSeconds must be greater than zero and
                                         less than or equal to 1800 (30 min).
                                       format: int32
                                       type: integer
                                     type:
-                                      description: type is used to specify the scaling
+                                      description: Type is used to specify the scaling
                                         policy.
                                       type: string
                                     value:
-                                      description: value contains the amount of change
+                                      description: Value contains the amount of change
                                         which is permitted by the policy. It must
                                         be greater than zero
                                       format: int32
@@ -8764,7 +8556,7 @@ spec:
                                   Max is used.
                                 type: string
                               stabilizationWindowSeconds:
-                                description: 'stabilizationWindowSeconds is the number
+                                description: 'StabilizationWindowSeconds is the number
                                   of seconds for which past recommendations should
                                   be considered while scaling up or scaling down.
                                   StabilizationWindowSeconds must be greater than
@@ -8774,8 +8566,6 @@ spec:
                                   - For scale down: 300 (i.e. the stabilization window
                                   is 300 seconds long).'
                                 format: int32
-                                maximum: 3600
-                                minimum: 0
                                 type: integer
                             type: object
                           scaleUp:
@@ -8794,18 +8584,18 @@ spec:
                                     which must hold true for a specified past interval.
                                   properties:
                                     periodSeconds:
-                                      description: periodSeconds specifies the window
+                                      description: PeriodSeconds specifies the window
                                         of time for which the policy should hold true.
                                         PeriodSeconds must be greater than zero and
                                         less than or equal to 1800 (30 min).
                                       format: int32
                                       type: integer
                                     type:
-                                      description: type is used to specify the scaling
+                                      description: Type is used to specify the scaling
                                         policy.
                                       type: string
                                     value:
-                                      description: value contains the amount of change
+                                      description: Value contains the amount of change
                                         which is permitted by the policy. It must
                                         be greater than zero
                                       format: int32
@@ -8823,7 +8613,7 @@ spec:
                                   Max is used.
                                 type: string
                               stabilizationWindowSeconds:
-                                description: 'stabilizationWindowSeconds is the number
+                                description: 'StabilizationWindowSeconds is the number
                                   of seconds for which past recommendations should
                                   be considered while scaling up or scaling down.
                                   StabilizationWindowSeconds must be greater than
@@ -8833,8 +8623,6 @@ spec:
                                   - For scale down: 300 (i.e. the stabilization window
                                   is 300 seconds long).'
                                 format: int32
-                                maximum: 3600
-                                minimum: 0
                                 type: integer
                             type: object
                         type: object
@@ -8843,22 +8631,6 @@ spec:
                     type: object
                   restoreToOriginalReplicaCount:
                     type: boolean
-                  scalingModifiers:
-                    description: ScalingModifiers describes advanced scaling logic
-                      options like formula
-                    properties:
-                      activationTarget:
-                        type: string
-                      formula:
-                        type: string
-                      metricType:
-                        description: MetricTargetType specifies the type of metric
-                          being targeted, and should be either "Value", "AverageValue",
-                          or "Utilization"
-                        type: string
-                      target:
-                        type: string
-                    type: object
                 type: object
               cooldownPeriod:
                 format: int32
@@ -8889,7 +8661,8 @@ spec:
                 format: int32
                 type: integer
               scaleTargetRef:
-                description: ScaleTarget holds the reference to the scale target Object
+                description: ScaleTarget holds the a reference to the scale target
+                  Object
                 properties:
                   apiVersion:
                     type: string
@@ -8907,7 +8680,7 @@ spec:
                   description: ScaleTriggers reference the scaler that will be used
                   properties:
                     authenticationRef:
-                      description: AuthenticationRef points to the TriggerAuthentication
+                      description: ScaledObjectAuthRef points to the TriggerAuthentication
                         or ClusterTriggerAuthentication object that is used to authenticate
                         the scaler with the environment
                       properties:
@@ -8947,8 +8720,6 @@ spec:
           status:
             description: ScaledObjectStatus is the status for a ScaledObject resource
             properties:
-              compositeScalerName:
-                type: string
               conditions:
                 description: Conditions an array representation to store multiple
                   Conditions
@@ -9038,10 +8809,11 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
   labels:
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: triggerauthentications.keda.sh
 spec:
   group: keda.sh
@@ -9067,14 +8839,6 @@ spec:
       type: string
     - jsonPath: .spec.hashiCorpVault.address
       name: VaultAddress
-      type: string
-    - jsonPath: .status.scaledobjects
-      name: ScaledObjects
-      priority: 1
-      type: string
-    - jsonPath: .status.scaledjobs
-      name: ScaledJobs
-      priority: 1
       type: string
     name: v1alpha1
     schema:
@@ -9267,22 +9031,12 @@ spec:
                   type: object
                 type: array
             type: object
-          status:
-            description: TriggerAuthenticationStatus defines the observed state of
-              TriggerAuthentication
-            properties:
-              scaledjobs:
-                type: string
-              scaledobjects:
-                type: string
-            type: object
         required:
         - spec
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
+    subresources: {}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -9290,17 +9044,18 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
   namespace: keda
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  creationTimestamp: null
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
   namespace: keda
 rules:
@@ -9323,7 +9078,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-external-metrics-reader
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-external-metrics-reader
 rules:
 - apiGroups:
@@ -9336,10 +9091,11 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
 rules:
 - apiGroups:
@@ -9463,7 +9219,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
   namespace: keda
 roleRef:
@@ -9481,7 +9237,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-auth-reader
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-auth-reader
   namespace: kube-system
 roleRef:
@@ -9499,7 +9255,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-hpa-controller-external-metrics
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-hpa-controller-external-metrics
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -9516,7 +9272,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -9533,7 +9289,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-system-auth-delegator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-system-auth-delegator
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -9553,7 +9309,7 @@ metadata:
     app.kubernetes.io/instance: admission-webhooks
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-admission-webhooks
   namespace: keda
 spec:
@@ -9575,7 +9331,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-metrics-apiserver
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-metrics-apiserver
   namespace: keda
 spec:
@@ -9583,9 +9339,12 @@ spec:
   - name: https
     port: 443
     targetPort: 6443
-  - name: metrics
-    port: 8080
+  - name: http
+    port: 80
     targetPort: 8080
+  - name: metrics
+    port: 9022
+    targetPort: 9022
   selector:
     app: keda-metrics-apiserver
 ---
@@ -9595,7 +9354,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
   namespace: keda
 spec:
@@ -9617,7 +9376,7 @@ metadata:
     app.kubernetes.io/component: admission-webhooks
     app.kubernetes.io/name: admission-webhooks
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-admission
   namespace: keda
 spec:
@@ -9648,7 +9407,7 @@ spec:
           value: ""
         - name: KEDA_HTTP_DEFAULT_TIMEOUT
           value: ""
-        image: ghcr.io/kedacore/keda-admission-webhooks:2.12.1
+        image: ghcr.io/kedacore/keda-admission-webhooks:2.10.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -9707,7 +9466,7 @@ metadata:
     app: keda-metrics-apiserver
     app.kubernetes.io/name: keda-metrics-apiserver
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-metrics-apiserver
   namespace: keda
 spec:
@@ -9726,7 +9485,6 @@ spec:
         - /usr/local/bin/keda-adapter
         - --secure-port=6443
         - --logtostderr=true
-        - --stderrthreshold=ERROR
         - --v=0
         - --client-ca-file=/certs/ca.crt
         - --tls-cert-file=/certs/tls.crt
@@ -9741,7 +9499,7 @@ spec:
               fieldPath: metadata.namespace
         - name: KEDA_HTTP_DEFAULT_TIMEOUT
           value: ""
-        image: ghcr.io/kedacore/keda-metrics-apiserver:2.12.1
+        image: ghcr.io/kedacore/keda-metrics-apiserver:2.10.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -9755,6 +9513,8 @@ spec:
           name: https
         - containerPort: 8080
           name: http
+        - containerPort: 9022
+          name: metrics
         readinessProbe:
           httpGet:
             path: /readyz
@@ -9804,7 +9564,7 @@ metadata:
     app.kubernetes.io/component: operator
     app.kubernetes.io/name: keda-operator
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-operator
   namespace: keda
 spec:
@@ -9829,15 +9589,11 @@ spec:
         command:
         - /keda
         env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         - name: WATCH_NAMESPACE
           value: ""
         - name: KEDA_HTTP_DEFAULT_TIMEOUT
           value: ""
-        image: ghcr.io/kedacore/keda:2.12.1
+        image: ghcr.io/kedacore/keda:2.10.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -9893,7 +9649,7 @@ metadata:
   labels:
     app.kubernetes.io/name: v1beta1.external.metrics.k8s.io
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: v1beta1.external.metrics.k8s.io
 spec:
   group: external.metrics.k8s.io
@@ -9913,7 +9669,7 @@ metadata:
     app.kubernetes.io/instance: admission-webhooks
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/part-of: keda-operator
-    app.kubernetes.io/version: 2.12.1
+    app.kubernetes.io/version: 2.10.1
   name: keda-admission
 webhooks:
 - admissionReviewVersions:
@@ -9938,53 +9694,5 @@ webhooks:
     - UPDATE
     resources:
     - scaledobjects
-  sideEffects: None
-  timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: keda-admission-webhooks
-      namespace: keda
-      path: /validate-keda-sh-v1alpha1-triggerauthentication
-  failurePolicy: Ignore
-  matchPolicy: Equivalent
-  name: vstriggerauthentication.kb.io
-  namespaceSelector: {}
-  objectSelector: {}
-  rules:
-  - apiGroups:
-    - keda.sh
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - triggerauthentications
-  sideEffects: None
-  timeoutSeconds: 10
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: keda-admission-webhooks
-      namespace: keda
-      path: /validate-keda-sh-v1alpha1-clustertriggerauthentication
-  failurePolicy: Ignore
-  matchPolicy: Equivalent
-  name: vsclustertriggerauthentication.kb.io
-  namespaceSelector: {}
-  objectSelector: {}
-  rules:
-  - apiGroups:
-    - keda.sh
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - clustertriggerauthentications
   sideEffects: None
   timeoutSeconds: 10
