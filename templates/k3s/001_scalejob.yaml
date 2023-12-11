@@ -72,7 +72,7 @@ spec:
                   - NET_ADMIN
             resources:
               limits:
-                cpu: "2"
+                cpu: "3"
                 memory: "4096Mi"
         dnsPolicy: "None"
         dnsConfig:
